@@ -25,7 +25,6 @@ const DEFAULT_CATEGORIES = [
   'لحظات مرعبة'
 ];
 
-// واجهة البحث البسيطة والفعالة
 const SearchOverlay: React.FC<{ 
   videos: Video[], 
   onClose: () => void, 
@@ -39,8 +38,8 @@ const SearchOverlay: React.FC<{
   );
 
   return (
-    <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl p-6 flex flex-col animate-in fade-in duration-300">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="fixed inset-0 z-[1200] bg-black/98 backdrop-blur-3xl p-6 flex flex-col animate-in fade-in duration-300">
+      <div className="flex items-center gap-4 mb-8 pt-6">
         <div className="relative flex-1">
           <input 
             autoFocus
@@ -48,25 +47,25 @@ const SearchOverlay: React.FC<{
             placeholder="ابحث عن كابوسك..." 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-white/5 border-2 border-red-600/30 rounded-2xl py-4 px-12 text-white outline-none focus:border-red-600 transition-all"
+            className="w-full bg-white/5 border-2 border-red-600/20 rounded-2xl py-4 px-12 text-white outline-none focus:border-red-600 transition-all shadow-inner"
           />
           <svg className="w-6 h-6 absolute right-4 top-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
         <button onClick={onClose} className="p-4 bg-red-600 rounded-2xl text-white font-black active:scale-95 shadow-[0_0_20px_red]">إغلاق</button>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-4 pb-20">
         {filtered.map(v => (
-          <div key={v.id} onClick={() => v.type === 'short' ? onPlayShort(v, [v]) : onPlayLong(v)} className="flex gap-4 p-3 bg-white/5 rounded-2xl border border-white/10 active:scale-95 transition-all">
-            <div className={`w-24 shrink-0 bg-black rounded-xl overflow-hidden ${v.type === 'short' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-              <video src={v.video_url} className="w-full h-full object-cover opacity-60" />
+          <div key={v.id} onClick={() => v.type === 'short' ? onPlayShort(v, [v]) : onPlayLong(v)} className="flex gap-4 p-4 bg-white/5 rounded-3xl border border-white/5 active:scale-95 transition-all hover:bg-white/10">
+            <div className={`w-28 shrink-0 bg-black rounded-2xl overflow-hidden border border-white/10 ${v.type === 'short' ? 'aspect-[9/16]' : 'aspect-video'}`}>
+              <video src={v.video_url} className="w-full h-full object-cover opacity-40" />
             </div>
-            <div className="flex flex-col justify-center">
-              <h3 className="text-sm font-black text-white line-clamp-1 italic">{v.title}</h3>
-              <span className="text-[10px] text-red-500 font-bold uppercase mt-1">{v.category}</span>
+            <div className="flex flex-col justify-center gap-1">
+              <h3 className="text-sm font-black text-white line-clamp-2 italic">{v.title}</h3>
+              <span className="text-[9px] text-red-500 font-black uppercase bg-red-600/10 px-2 py-0.5 rounded w-fit border border-red-600/20">{v.category}</span>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="text-center text-gray-500 mt-20 font-bold">لا توجد نتائج مطابقة..</p>}
+        {filtered.length === 0 && <p className="text-center text-gray-600 mt-20 font-black italic tracking-widest uppercase text-xs">No records found in current sector</p>}
       </div>
     </div>
   );
@@ -103,7 +102,10 @@ const App: React.FC = () => {
     if (isHardRefresh) setLoading(true);
     try {
       const data = await fetchCloudinaryVideos();
-      if (!data || data.length === 0) return;
+      if (!data || data.length === 0) {
+        setRawVideos([]);
+        return;
+      }
       
       const recommendedOrder = await getRecommendedFeed(data, interactions);
       const orderedVideos = recommendedOrder
@@ -221,7 +223,7 @@ const App: React.FC = () => {
       <main className="pt-20 max-w-lg mx-auto overflow-x-hidden">{renderContent()}</main>
 
       <Suspense fallback={null}><AIOracle /></Suspense>
-      {toast && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1100] bg-red-600 px-6 py-2 rounded-full font-bold shadow-lg shadow-red-600/40 text-xs">{toast}</div>}
+      {toast && <div className="fixed top-28 left-1/2 -translate-x-1/2 z-[1100] bg-red-600 px-8 py-3 rounded-2xl font-black shadow-2xl shadow-red-600/40 text-[10px] italic border border-red-400/30 backdrop-blur-md">{toast}</div>}
       
       {isSearchOpen && (
         <SearchOverlay 

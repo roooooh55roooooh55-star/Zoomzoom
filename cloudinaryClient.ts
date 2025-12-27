@@ -10,6 +10,7 @@ const COMMON_TAG = 'hadiqa_v4';
 export const fetchCloudinaryVideos = async (): Promise<Video[]> => {
   try {
     const timestamp = new Date().getTime();
+    // الرابط يحتاج لتفعيل "Resource List" في إعدادات Cloudinary (Security -> Restricted media types)
     const targetUrl = `https://res.cloudinary.com/${CLOUD_NAME}/video/list/${COMMON_TAG}.json?t=${timestamp}`;
     
     const response = await fetch(targetUrl, {
@@ -20,6 +21,7 @@ export const fetchCloudinaryVideos = async (): Promise<Video[]> => {
     });
 
     if (!response || !response.ok) {
+      console.warn("Cloudinary Resource List might be disabled or tag is wrong.");
       const cached = localStorage.getItem('app_videos_cache');
       return cached ? JSON.parse(cached) : [];
     }
@@ -29,6 +31,7 @@ export const fetchCloudinaryVideos = async (): Promise<Video[]> => {
     
     return mapCloudinaryData(resources);
   } catch (error) {
+    console.error("Fetch Error:", error);
     const cached = localStorage.getItem('app_videos_cache');
     return cached ? JSON.parse(cached) : [];
   }
@@ -39,12 +42,8 @@ const mapCloudinaryData = (resources: any[]): Video[] => {
     const videoType: 'short' | 'long' = (res.height > res.width) ? 'short' : 'long';
     const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload`;
     
-    /**
-     * إصلاح خطأ المصدر:
-     * نستخدم f_auto للتحسين ولكن ننهي الرابط بـ .mp4 لضمان قبول المتصفح للمصدر كفيديو مدعوم.
-     * br_1.0m: يضمن تشغيل سلس حتى على الشبكات الضعيفة.
-     */
-    const optimizedUrl = `${baseUrl}/q_auto,f_auto,vc_h264,br_1.0m/v${res.version}/${res.public_id}.mp4`;
+    // استخدام f_auto و q_auto مع لاحقة .mp4 لضمان التوافق والسرعة
+    const optimizedUrl = `${baseUrl}/q_auto,f_auto,vc_h264,br_1.5m/v${res.version}/${res.public_id}.mp4`;
     const posterUrl = `${baseUrl}/q_auto,f_auto,so_0/v${res.version}/${res.public_id}.jpg`;
     
     const categoryTag = res.context?.custom?.caption || 'غموض';
