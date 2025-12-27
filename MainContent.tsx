@@ -38,26 +38,50 @@ const VideoCardThumbnail: React.FC<{
 
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !video.video_url) return;
+
+    // فقط قم بالتحميل إذا كان الرابط مختلفاً لتجنب مقاطعة التشغيل
+    if (v.src !== video.video_url) {
+      v.src = video.video_url;
+      v.load();
+    }
+
     if (isOverlayActive) {
       v.pause();
       if (observerRef.current) observerRef.current.disconnect();
       return;
     }
+
     observerRef.current = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) v.play().catch(() => {}); else v.pause();
+      if (entry.isIntersecting) {
+        // التعامل مع الوعد لمنع خطأ Interrupted
+        const playPromise = v.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // تجاهل خطأ المقاطعة لأنه ناتج عن التمرير السريع
+          });
+        }
+      } else {
+        v.pause();
+      }
     }, { threshold: 0.1 });
+
     observerRef.current.observe(v);
-    return () => observerRef.current?.disconnect();
+    return () => {
+      observerRef.current?.disconnect();
+      v.pause();
+    };
   }, [video.video_url, isOverlayActive]);
 
   return (
     <div className="w-full h-full relative bg-neutral-950 overflow-hidden group rounded-2xl shadow-2xl border border-white/5 pointer-events-auto transition-all duration-500 hover:border-red-600/30">
       <video 
         ref={videoRef}
-        src={video.video_url} 
         poster={video.poster_url}
-        muted loop playsInline 
+        muted 
+        loop 
+        playsInline 
+        preload="metadata"
         className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-700 pointer-events-none"
       />
       
@@ -69,7 +93,6 @@ const VideoCardThumbnail: React.FC<{
         )}
       </div>
 
-      {/* زر الإعجاب في الزاوية العليا لجميع الأقسام */}
       <div className="absolute top-2 right-2 z-30">
         <button 
           onClick={(e) => { e.stopPropagation(); onLike?.(video.id); }}
@@ -142,7 +165,6 @@ const SmartMarquee: React.FC<{
 
     const scroll = () => {
       if (scrollRef.current) {
-        // في نظام RTL: إنقاص scrollLeft يحرك لليمين (LTR)، وزيادته تحرك لليسار (RTL)
         const step = direction === 'rtl' ? 1 : -1;
         scrollRef.current.scrollLeft += step;
         
@@ -321,9 +343,8 @@ const MainContent: React.FC<MainContentProps> = ({
 
   const shortsGroup1 = useMemo(() => shorts.slice(0, 4), [shorts]);
   const shortsGroup2 = useMemo(() => shorts.slice(4, 8), [shorts]);
-  const shortsHappyTrip = useMemo(() => shorts.slice(8, 16), [shorts]);
-  // مجموعة الفيديوهات لقسم "رحلة جديدة" (10 فيديوهات شورتس تحديداً)
-  const shortsNewAdventure = useMemo(() => shorts.slice(16, 26).reverse(), [shorts]);
+  const shortsHappyTrip = useMemo(() => shorts.slice(8, 18), [shorts]);
+  const shortsNewAdventure = useMemo(() => shorts.slice(18, 28).reverse(), [shorts]);
 
   const longsFeatured = useMemo(() => longs.slice(0, 3), [longs]);
   const longsInsight = useMemo(() => {
@@ -480,7 +501,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </section>
       )}
 
-      {/* 7. رحلة جديدة (شورتس LTR) - القسم المطلوب الجديد أسفل قسم نبذة */}
+      {/* 7. رحلة جديدة (شورتس LTR) */}
       <section className="mt-8 mb-12">
         <div className="flex items-center gap-2 mb-3 px-2">
           <span className="w-2 h-2 bg-orange-600 rounded-full shadow-[0_0_10px_orange] animate-bounce"></span>

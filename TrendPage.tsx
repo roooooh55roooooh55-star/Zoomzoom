@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Video } from '../types';
-import { fetchCloudinaryVideos } from '../cloudinaryClient';
+import { Video } from './types';
+import { fetchCloudinaryVideos } from './cloudinaryClient';
 import { getDeterministicStats, formatBigNumber } from './MainContent';
 
 const LOGO_URL = "https://i.top4top.io/p_3643ksmii1.jpg";
